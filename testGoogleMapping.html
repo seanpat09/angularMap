@@ -61,7 +61,7 @@
 </style>
 <div ng-app="listingSearch" ng-controller="ListingSearchCtrl">
     <div id="listings">
-        <div ng-repeat="listing in listings" class="aListing" ng-show="listing.page == currentPage">
+        <div ng-repeat="listing in listings" class="aListing">
             <span class="listingImage" style="background-image: url('{{listing.image}}');"></span>
             <span class="listingDetails">
                 <span><a href="javascript:void(0);">{{listing.name}}</a></span>
@@ -135,86 +135,83 @@
                         listing.infoWindow = infoWindow;
                         $scope.$apply();
                     }
-                };
+                }
+                var geocodeListings = function(listings){
+                        listings.forEach( function(listing){
+                            var address = listing.streetAddress + ' ' + listing.city + ', ' + listing.state;
+                            geocoder.geocode({'address': address},
+                                function(results, status){
+                                    geocodeCallback(results,status,listing);
+                                }
+                            );
+                        });
+                    }
 
-                $scope.listings =[ 
+                $scope.listingMap = { '1' : [
                     {   name: 'Building 1',
                         image: 'building1.jpg',
                         streetAddress: '1675 Larimer Street',
                         city: 'Denver',
-                        state: 'CO',
-                        page: 1
+                        state: 'CO'
                     },
                     {   name: 'Building 2',
                         image: 'building2.jpg',
                         streetAddress: '12617 Julian Street',
                         city: 'Broomfield',
-                        state: 'CO',
-                        page: 1
+                        state: 'CO'
                     },
                     {   name: 'Building 3',
                         image: 'building3.jpg',
                         streetAddress: '3200 Brighton Blvd',
                         city: 'Denver',
-                        state: 'CO',
-                        page: 1
+                        state: 'CO'
                     },
                     {   name: 'Building 1',
                         image: 'building1.png',
                         streetAddress: '1345 Quarry Drive',
                         city: 'Mohegan Lake',
-                        state: 'NY',
-                        page: 1
+                        state: 'NY'
                     },
                     {   name: 'Building 3',
                         image: '742_Evergreen_Terrace.png',
                         streetAddress: '742 Evergreen Terrace',
                         city: 'Springfield',
-                        state: 'IL',
-                        page: 1
-                    },
+                        state: 'IL'
+                    }],
+                    '2': [
                     {   name: 'Building 3 Page 2',
                         image: 'building3.jpg',
                         streetAddress: '826 Lincoln Road',
                         city: 'Miami Beach',
-                        state: 'FL',
-                        page: 2
+                        state: 'FL'
                     },
                     {   name: 'Building 1 Page 2',
                         image: 'building1.jpg',
                         streetAddress: '120 Wall Street',
                         city: 'New York',
-                        state: 'NY',
-                        page: 2
+                        state: 'NY'
                     },
                     {   name: 'Building 2 Page 2',
                         image: 'building2.jpg',
                         streetAddress: '108 Chestnut',
                         city: 'Toronto',
-                        state: 'AK',
-                        page: 2
+                        state: 'AK'
                     },
                     {   name: 'Building 3 Page 2',
                         image: '742_Evergreen_Terrace.png',
                         streetAddress: '2409 Broadway',
                         city: 'New York',
-                        state: 'NY',
-                        page: 2
+                        state: 'NY'
                     },
                     {   name: 'Building 1 Page 2',
                         image: 'building1.png',
                         streetAddress: '1020 Main Street',
                         city: 'San Francisco',
-                        state: 'CA',
-                        page: 2
-                    },];
-                $scope.listings.forEach( function(listing){
-                    var address = listing.streetAddress + ' ' + listing.city + ', ' + listing.state;
-                    geocoder.geocode({'address': address}, function(results, status){
-                        geocodeCallback(results,status,listing);
-                    });
-                });
-
+                        state: 'CA'
+                    }]};
+                
+                $scope.listings = $scope.listingMap['1'];
+                geocodeListings($scope.listings);
                 $scope.showInfo = function(listing){
                     if (listing.marker){
                         if( listing.infoWindow )
@@ -243,10 +240,18 @@
                 }
 
                 $scope.decrementPage = function(){
-                    $scope.currentPage = ($scope.currentPage > 1 ) ? $scope.currentPage - 1 : $scope.currentPage;
+                    if( $scope.currentPage > 1 ){
+                        $scope.currentPage = $scope.currentPage - 1;
+                        $scope.listings = $scope.listingMap[$scope.currentPage.toString()];
+                        geocodeListings($scope.listings);
+                    }
                 }
                 $scope.incrementPage = function(){
-                    $scope.currentPage = ($scope.currentPage < 2 ) ? $scope.currentPage + 1 : $scope.currentPage;
+                    if( $scope.currentPage < 2 ){
+                        $scope.currentPage = $scope.currentPage + 1;
+                        $scope.listings = $scope.listingMap[$scope.currentPage.toString()];
+                        geocodeListings($scope.listings);
+                    }
                 }
             });
     }(angular));
