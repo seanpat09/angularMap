@@ -139,11 +139,13 @@
                 var geocodeListings = function(listings){
                         listings.forEach( function(listing){
                             var address = listing.streetAddress + ' ' + listing.city + ', ' + listing.state;
-                            geocoder.geocode({'address': address},
-                                function(results, status){
-                                    geocodeCallback(results,status,listing);
-                                }
-                            );
+                            if( !listing.marker ){
+                                geocoder.geocode({'address': address},
+                                    function(results, status){
+                                        geocodeCallback(results,status,listing);
+                                    }
+                                );
+                            }
                         });
                     }
 
@@ -209,7 +211,7 @@
                         city: 'San Francisco',
                         state: 'CA'
                     }]};
-                
+
                 $scope.listings = $scope.listingMap['1'];
                 geocodeListings($scope.listings);
                 $scope.showInfo = function(listing){
