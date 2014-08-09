@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<style>
+    body { font-family: Helvetica;}
+    #map_canvas {
+        display:inline-block;
+        width: 48%;
+        height: 510px;
+    }
+    #listings{
+        display:inline-block;
+        width: 48%;
+        height: 510px;
+    }
+    #listings a { text-decoration: none;}
+    .aListing{
+        height: 100px;
+        width: 100%;
+        border: 1px solid #E6E6E6;
+        display:table;
+    }
+    .aListing > span { display: table-cell; vertical-align: middle;}
+
+    .listingDetails { width: 60%; padding-left:10px;}
+    .listingDetails > span{ display:block; }
+
+    .listingImage {
+        width: 100px;
+        max-height: 100px;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+    }
+
+    .selectButton{
+        background:#FFFFFF;
+        font-size: 12px;
+        display:inline-block;
+        height: 20px;
+        width: 100px;
+        text-align:center;
+        border: 1px solid #000000;
+    }
+    .selected {
+        background:#12b237;
+    }
+    .selectButton > span, .selected > span {
+        line-height:20px;
+    }
+    .selectButton > span {
+        color:#000000;
+    }
+    .selected > span {
+        color:#FFFFFF;
+    }
+    
+    .paginator{
+        width:100%;
+        font-size:3.0em;
+    }
+</style>
+<div ng-app="listingSearch" ng-controller="ListingSearchCtrl">
+    <div id="listings">
+        <div ng-repeat="listing in listings" class="aListing" ng-show="listing.page == currentPage">
+            <span class="listingImage" style="background-image: url('{{listing.image}}');"></span>
+            <span class="listingDetails">
+                <span><a href="javascript:void(0);">{{listing.name}}</a></span>
+                <span>{{listing.streetAddress}}</span>
+                <span>{{listing.city}}, {{listing.state}}</span>
+            </span>
+            <span>
+                <a href="javascript:void(0)" class="selectButton" ng-class="listing.selected ? 'selected' : '' "
+                   ng-mouseenter="showInfo(listing)" ng-mouseleave="hideInfo(listing);" ng-click="select(listing)">
+                    <span>Select</span>
+                </a>
+            </span>
+        </div>
+    </div>
+    <div id="map_canvas"></div>
+    <div class="paginator">
+        <a href="javascript:void(0)" ng-click="decrementPage()">&laquo;</a>
+        <a href="javascript:void(0)" ng-click="incrementPage()">&raquo;</a>
+    </div>
+    <div ng-repeat="listing in listings | filter:{selected:true}" class="aListing">
+        <span class="listingImage" style="background-image: url('{{listing.image}}');"></span>
+        <span class="listingDetails">
+            <span><a href="javascript:void(0);">{{listing.name}}</a></span>
+            <span>{{listing.streetAddress}}</span>
+            <span>{{listing.city}}, {{listing.state}}</span>
+        </span>
+    </div>
+</div>
+<script src="https://maps.google.com/maps/api/js?v=3&sensor=false&language=en"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.min.js"></script>
+<script>
+    (function(angular){
+        'use strict';
+        var myLatlng, mapOptions, map, geocoder;
+        
+        mapOptions = {
+          zoom: 5
+        }
+        map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+        geocoder = new google.maps.Geocoder();
+
+        var baseIcon = {
+                path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                fillOpacity: 1,
+                scale: 10,
+                strokeColor: "black",
+                strokeWeight: 1,
+            },
+            greenIcon = angular.copy(baseIcon),
+            redIcon = angular.copy(baseIcon);
+
+        greenIcon.fillColor = "#12b237";
+        redIcon.fillColor = "#db4436";
+
+        angular.module('listingSearch',[])
+            .controller('ListingSearchCtrl', function($scope){
+                $scope.currentPage = 1;
+                var geocodeCallback = function(results, status, listing){
+                    if(status == google.maps.GeocoderStatus.OK && results != null){
+                        var marker = new google.maps.Marker({
+                               map: map,
+                               position: results[0].geometry.location,
+                               animation:google.maps.Animation.DROP,
+                               icon:redIcon
+                            }),
+                            infoWindow = new google.maps.InfoWindow({
+                                content: 'hello'
+                            });
+                        map.setCenter(marker.getPosition());
+                        listing.marker = marker;
+                        listing.infoWindow = infoWindow;
+                        $scope.$apply();
+                    }
+                };
+
+                $scope.listings =[ 
+                    {   name: 'Building 1',
+                        image: 'building1.jpg',
+                        streetAddress: '1675 Larimer Street',
+                        city: 'Denver',
+                        state: 'CO',
+                        page: 1
+                    },
+                    {   name: 'Building 2',
+                        image: 'building2.jpg',
+                        streetAddress: '12617 Julian Street',
+                        city: 'Broomfield',
+                        state: 'CO',
+                        page: 1
+                    },
+                    {   name: 'Building 3',
+                        image: 'building3.jpg',
+                        streetAddress: '3200 Brighton Blvd',
+                        city: 'Denver',
+                        state: 'CO',
+                        page: 1
+                    },
+                    {   name: 'Building 1',
+                        image: 'building1.png',
+                        streetAddress: '1345 Quarry Drive',
+                        city: 'Mohegan Lake',
+                        state: 'NY',
+                        page: 1
+                    },
+                    {   name: 'Building 3',
+                        image: '742_Evergreen_Terrace.png',
+                        streetAddress: '742 Evergreen Terrace',
+                        city: 'Springfield',
+                        state: 'IL',
+                        page: 1
+                    },
+                    {   name: 'Building 3 Page 2',
+                        image: 'building3.jpg',
+                        streetAddress: '826 Lincoln Road',
+                        city: 'Miami Beach',
+                        state: 'FL',
+                        page: 2
+                    },
+                    {   name: 'Building 1 Page 2',
+                        image: 'building1.jpg',
+                        streetAddress: '120 Wall Street',
+                        city: 'New York',
+                        state: 'NY',
+                        page: 2
+                    },
+                    {   name: 'Building 2 Page 2',
+                        image: 'building2.jpg',
+                        streetAddress: '108 Chestnut',
+                        city: 'Toronto',
+                        state: 'AK',
+                        page: 2
+                    },
+                    {   name: 'Building 3 Page 2',
+                        image: '742_Evergreen_Terrace.png',
+                        streetAddress: '2409 Broadway',
+                        city: 'New York',
+                        state: 'NY',
+                        page: 2
+                    },
+                    {   name: 'Building 1 Page 2',
+                        image: 'building1.png',
+                        streetAddress: '1020 Main Street',
+                        city: 'San Francisco',
+                        state: 'CA',
+                        page: 2
+                    },];
+                $scope.listings.forEach( function(listing){
+                    var address = listing.streetAddress + ' ' + listing.city + ', ' + listing.state;
+                    geocoder.geocode({'address': address}, function(results, status){
+                        geocodeCallback(results,status,listing);
+                    });
+                });
+
+                $scope.showInfo = function(listing){
+                    if (listing.marker){
+                        if( listing.infoWindow )
+                            listing.infoWindow.open(map,listing.marker);
+                        if( !listing.selected ){
+                            listing.marker.setIcon(greenIcon);
+                        }
+                    }
+                }
+                $scope.hideInfo = function(listing){
+                    if (listing.marker){
+                        listing.infoWindow.close();
+                        if( !listing.selected ){
+                            listing.marker.setIcon(redIcon);
+                        }
+                    }
+                }
+                $scope.select = function(listing){
+                    if (listing.marker){
+                        if( listing.selected )
+                            listing.marker.setIcon(redIcon);
+                        else
+                            listing.marker.setIcon(greenIcon);
+                    }
+                    listing.selected = !listing.selected;
+                }
+
+                $scope.decrementPage = function(){
+                    $scope.currentPage = ($scope.currentPage > 1 ) ? $scope.currentPage - 1 : $scope.currentPage;
+                }
+                $scope.incrementPage = function(){
+                    $scope.currentPage = ($scope.currentPage < 2 ) ? $scope.currentPage + 1 : $scope.currentPage;
+                }
+            });
+    }(angular));
+</script>
+</html>
